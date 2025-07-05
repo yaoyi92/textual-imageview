@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from PIL import Image
 from rich.color import Color
 from rich.console import Console, ConsoleOptions, RenderResult
-from rich.segment import Segment
+from rich.segment import Segment, ControlType
 from rich.style import Style
 
 Zoom = int
@@ -263,7 +263,13 @@ class ImageView:
             pad_left = " " * max(-origin_x, 0)
             pad_top = "\n" * max(-origin_y // 2, 0)
 
-            return [Segment("", None, pad_top + pad_left + sixel)]
+            return [
+                Segment(
+                    pad_top + pad_left + sixel,
+                    None,
+                    ((ControlType.CURSOR_UP,),),
+                )
+            ]
 
         null_style = Style.null()
         newline = Segment("\n", null_style)
