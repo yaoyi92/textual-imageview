@@ -263,7 +263,7 @@ class ImageView:
             pad_left = " " * max(-origin_x, 0)
             pad_top = "\n" * max(-origin_y // 2, 0)
 
-            return [Segment(pad_top + pad_left + sixel, Style.null())]
+            return [Segment.control(pad_top + pad_left + sixel)]
 
         null_style = Style.null()
         newline = Segment("\n", null_style)
