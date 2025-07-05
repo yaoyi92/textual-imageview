@@ -36,9 +36,11 @@ class ImageView:
         zoom: int = 0,
         origin_position: Tuple[int, int] = (0, 0),
         container_size: Optional[Tuple[int, int]] = None,
+        use_sixel: bool = False,
     ):
         self.images: dict[Zoom, Image.Image] = {}
         self.segment_cache: dict[Zoom, dict[Tuple[int, int], Segment]] = {}
+        self.use_sixel = use_sixel
 
         self.image = image
         self._container_size = container_size
@@ -245,6 +247,24 @@ class ImageView:
         w, h = self._container_size[0], self._container_size[1] * 2
         origin_x, origin_y = self.origin_position
 
+        if self.use_sixel:
+            # Crop the visible region
+            x0 = max(origin_x, 0)
+            y0 = max(origin_y, 0)
+            x1 = min(origin_x + w, img_w)
+            y1 = min(origin_y + h, img_h)
+
+            if x0 >= x1 or y0 >= y1:
+                return ""
+
+            cropped = image.crop((x0, y0, x1, y1))
+            sixel = self.image_to_sixel(cropped)
+
+            pad_left = " " * max(-origin_x, 0)
+            pad_top = "\n" * max(-origin_y // 2, 0)
+
+            return [Segment(pad_top + pad_left + sixel, Style.null())]
+
         null_style = Style.null()
         newline = Segment("\n", null_style)
 
@@ -312,3 +332,54 @@ class ImageView:
             cache[position] = segment
 
         return cache[position]
+
+    def image_to_sixel(self, image: Image.Image) -> str:
+        """Return a SIXEL escape sequence representing ``image``.
+
+        This is a minimal implementation that supports a limited palette but
+        works well enough for simple images. It does not attempt any dithering
+        or compression optimisations.
+        """
+        image = image.convert("RGB")
+        width, height = image.size
+
+        palette: dict[tuple[int, int, int], int] = {}
+        registers: list[str] = []
+
+        def get_register(color: tuple[int, int, int]) -> int:
+            if color not in palette:
+                index = len(palette)
+                palette[color] = index
+                r, g, b = color
+                registers.append(
+                    f"#{index};2;{r*100//255};{g*100//255};{b*100//255}"
+                )
+            return palette[color]
+
+        pixels = image.load()
+
+        # Build palette
+        for y in range(height):
+            for x in range(width):
+                get_register(pixels[x, y])
+
+        lines: list[str] = ["\x1bPq" + "".join(registers)]
+
+        for y0 in range(0, height, 6):
+            for color, reg in palette.items():
+                line = [f"#{reg}"]
+                for x in range(width):
+                    bits = 0
+                    for dy in range(6):
+                        y = y0 + dy
+                        if y >= height:
+                            continue
+                        if pixels[x, y] == color:
+                            bits |= 1 << dy
+                    line.append(chr(0x3F + bits))
+                line.append("$")
+                lines.append("".join(line))
+            lines.append("-")
+
+        lines.append("\x1b\\")
+        return "".join(lines)

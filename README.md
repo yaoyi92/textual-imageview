@@ -15,6 +15,8 @@ Use the `vimg` CLI command to quickly view an image in the terminal.
 vimg <path_to_image>
 ```
 
+Pass `--sixel` to use SIXEL graphics if your terminal supports it.
+
 Click and drag (or press W/S/A/D) to move around the image, and scroll (or press -/+) to zoom in/out of the image.
 
 `vimg` is built on `ImageView`, a [Rich](https://github.com/textualize/rich/) renderable that renders images with padding/zoom, and `ImageViewer`, a [Textual](https://github.com/textualize/textual/) widget that adds mouse interactivity to `ImageView`. Add `textual-imageview` as a dependency to use them in your Textual app!

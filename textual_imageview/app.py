@@ -35,7 +35,7 @@ class ImageViewerApp(App):
         Binding("Q,_", "zoom(2)", "Fast Zoom Out", show=False),
     ]
 
-    def __init__(self, image_path: Union[str, Path]):
+    def __init__(self, image_path: Union[str, Path], *, use_sixel: bool = False):
         """Inits vimg
 
         Args:
@@ -49,7 +49,7 @@ class ImageViewerApp(App):
 
         self.sub_title = image_path.name
         self.image = Image.open(image_path)
-        self.image_viewer = ImageViewer(self.image)
+        self.image_viewer = ImageViewer(self.image, use_sixel=use_sixel)
 
     def action_move(self, delta_x: int, delta_y: int):
         self.image_viewer.image.move(delta_x, delta_y)
@@ -79,7 +79,13 @@ def vimg():
         version=__version__,
     )
 
+    parser.add_argument(
+        "--sixel",
+        action="store_true",
+        help="Render image using SIXEL graphics if supported",
+    )
+
     args = parser.parse_args()
 
-    app = ImageViewerApp(args.image_path)
+    app = ImageViewerApp(args.image_path, use_sixel=args.sixel)
     app.run()
