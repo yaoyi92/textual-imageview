@@ -16,14 +16,14 @@ class ImageViewer(Widget):
     }
     """
 
-    def __init__(self, image: Image.Image):
+    def __init__(self, image: Image.Image, *, use_sixel: bool = False):
         super().__init__()
         if not isinstance(image, Image.Image):
             raise TypeError(
                 f"Expected PIL Image, but received '{type(image).__name__}' instead."
             )
 
-        self.image = ImageView(image)
+        self.image = ImageView(image, use_sixel=use_sixel)
         self.mouse_down = False
 
     def on_show(self):
