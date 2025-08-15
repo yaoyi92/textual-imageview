@@ -76,9 +76,9 @@ class ImageView:
         if zoom not in self.images:
             multiplier = self.ZOOM_RATE**zoom
             w, h = self.image.size
-            self.images[zoom] = self.image.resize(
-                (round(w * multiplier), round(h * multiplier))
-            )
+            new_w = max(1, round(w * multiplier))
+            new_h = max(1, round(h * multiplier))
+            self.images[zoom] = self.image.resize((new_w, new_h))
             self.segment_cache[zoom] = {}
 
         if self._container_size is not None:
